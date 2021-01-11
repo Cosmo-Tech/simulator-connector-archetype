@@ -13,7 +13,5 @@ jobs:
         java-version: 11
     - name: Install Mvn project locally
       run: "mvn install"
-    - name: Change to temporary directory
-      run: cd /tmp
-    - name: Generate Project using archetype
-      run: "mvn archetype:generate -B -DarchetypeArtifactId=simulator-connector-archetype -DarchetypeGroupId=com.cosmotech -DgroupId=cosmotech.ci -DartifactId=generate -DarchetypeVersion=1.0-SNAPSHOT"
+    - name: Change to temporary directory and Generate Project using archetype
+      run: "cd /tmp | mvn archetype:generate -B -DarchetypeArtifactId=simulator-connector-archetype -DarchetypeGroupId=com.cosmotech -DgroupId=cosmotech.ci -DartifactId=generate -DarchetypeVersion=1.0-SNAPSHOT"
