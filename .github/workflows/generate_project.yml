@@ -6,12 +6,11 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.3.4
     - name: Set up JDK 11
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v1.4.3
       with:
         java-version: 11
-    - name: Install Mvn project locally
-      run: "mvn install"
-    - name: Change to temporary directory and Generate Project using archetype
-      run: "cd /tmp | mvn archetype:generate -B -DarchetypeArtifactId=simulator-connector-archetype -DarchetypeGroupId=com.cosmotech -DgroupId=cosmotech.ci -DartifactId=generate -DarchetypeVersion=1.0-SNAPSHOT"
+    - name: Clean install
+      run: "mvn -B clean install"
+
