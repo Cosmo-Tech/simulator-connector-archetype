@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *  - process data
  *  - export several CSV files with data expected by the Simulator
  */
-public class HelloWorldConnector implements Connector<CsvFileReader>
+public class HelloWorldConnector implements Connector<CsvFileReader,List<CsvData>>
 {
 
     @Override
@@ -60,13 +62,15 @@ public class HelloWorldConnector implements Connector<CsvFileReader>
             if ( !dummyData.isEmpty() ) {
                 // Extract headers from source files
                 final List<String> headers = dummyData.get(0);
+                final Map<String, String> headerNameAndType = headers.stream()
+                    .collect(Collectors.toMap(Function.identity(), (header) -> "type" ));
 
                 // Construct data to Export
                 dummyData
                     .subList(1, dummyData.size())
                     .stream()
                     .collect(Collectors.groupingBy(strings -> strings.get(0)))
-                    .forEach((fileName,rows) -> dataToExport.add(new CsvData(fileName,headers,rows,exportDemoFolder)));
+                    .forEach((fileName,rows) -> dataToExport.add(new CsvData(fileName,headerNameAndType,rows,exportDemoFolder)));
 
             }
         } catch (IOException e) {
@@ -83,8 +87,18 @@ public class HelloWorldConnector implements Connector<CsvFileReader>
         //  - The client which retrieve data is created
         //  - data are processed
         //  - data are sent to the simulator
+        System.out.println("Start Process");
+        System.out.println("Building Client ... ");
         final CsvFileReader client = this.buildClient();
+
+        System.out.println("Constructing simulator data... ");
         final List<CsvData> processedData = this.constructSimulatorData(client);
-        processedData.forEach(CsvData::exportData);
+        processedData.forEach(
+            (csvData) -> {
+                System.out.println("Exporting simulator data into " + csvData.getExportDirectory() + csvData.getFileName() + ".csv");
+                csvData.exportData();
+            }
+        );
+        System.out.println("End Process");
     }
 }
