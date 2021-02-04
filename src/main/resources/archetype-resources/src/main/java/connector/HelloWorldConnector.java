@@ -16,6 +16,8 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 /**
  * Hello world Connector:
@@ -25,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
  *  - process data
  *  - export several CSV files with data expected by the Simulator
  */
-public class HelloWorldConnector implements Connector<CsvFileReader,List<CsvData>>
+public class HelloWorldConnector implements Connector<CsvFileReader,List<CsvData>,List<String>>
 {
 
+    private static final Config configuration  = ConfigProvider.getConfig();
+
     @Override
-    public CsvFileReader buildClient() {
+    public CsvFileReader createClient() {
         // A dummy example here read a CSV file with some vegetable information
         try {
             return new CsvFileReader(
@@ -37,7 +41,13 @@ public class HelloWorldConnector implements Connector<CsvFileReader,List<CsvData
                 new BufferedReader(
                     new FileReader(
                         Objects.requireNonNull(this.getClass().getClassLoader()
-                            .getResource("brassica-oleracea.csv")).getFile()
+                            .getResource(
+                                configuration
+                                    .getValue("raw.data.csv.path",
+                                        String.class
+                                    )
+                            )
+                        ).getFile()
                     )
                 )
             );
@@ -48,7 +58,7 @@ public class HelloWorldConnector implements Connector<CsvFileReader,List<CsvData
 
     @NotNull
     @Override
-    public List<CsvData> constructSimulatorData(CsvFileReader csvFileReader) {
+    public List<CsvData> prepare(CsvFileReader csvFileReader) {
         // A dummy example here:
         // - all source CSV lines are read
         // - the data are grouped by name (a column in the source CSV file)
@@ -82,23 +92,24 @@ public class HelloWorldConnector implements Connector<CsvFileReader,List<CsvData
 
 
     @Override
-    public void process() {
+    public List<String> process() {
         //  Basically here :
         //  - The client which retrieve data is created
         //  - data are processed
         //  - data are sent to the simulator
         System.out.println("Start Process");
         System.out.println("Building Client ... ");
-        final CsvFileReader client = this.buildClient();
-
+        final CsvFileReader client = this.createClient();
+        List<String> result = new ArrayList<>();
         System.out.println("Constructing simulator data... ");
-        final List<CsvData> processedData = this.constructSimulatorData(client);
+        final List<CsvData> processedData = this.prepare(client);
         processedData.forEach(
             (csvData) -> {
                 System.out.println("Exporting simulator data into " + csvData.getExportDirectory() + csvData.getFileName() + ".csv");
-                csvData.exportData();
+                result.add(csvData.writeFile());
             }
         );
         System.out.println("End Process");
+        return result;
     }
 }

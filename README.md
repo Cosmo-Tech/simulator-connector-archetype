@@ -2,7 +2,7 @@
 
 # How to generate a project with this archetype
 
-```
+```shell
 mvn archetype:generate \
  -B \
  -DarchetypeArtifactId=simulator-connector-archetype \
